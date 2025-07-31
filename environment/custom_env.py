@@ -1,5 +1,3 @@
-# custom_env.py - Fixed version
-
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
@@ -11,12 +9,12 @@ class EnergyEnv(gym.Env):
     def __init__(self, render_mode=None):
         super(EnergyEnv, self).__init__()
         self.grid_size = 5
-        self.action_space = spaces.Discrete(4)  # 0:up, 1:right, 2:down, 3:left
+        self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Box(low=0, high=1, 
                                           shape=(self.grid_size, self.grid_size),
                                           dtype=np.float32)
         
-        # Define appliance positions and their energy impact
+        
         self.appliances = {
             'AC': {'pos': (0,0), 'energy': -3, 'desc': "High energy use"},
             'Fridge': {'pos': (0,3), 'energy': -1, 'desc': "Constant use"},
@@ -34,17 +32,16 @@ class EnergyEnv(gym.Env):
         self.window = None
         self.clock = None
         self.current_energy = 0
-        self.max_energy = 10  # Threshold for color changes
+        self.max_energy = 10
         
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        # Start at random position (avoid starting on appliances)
+       
         empty_positions = [(i,j) for i in range(self.grid_size) 
                          for j in range(self.grid_size) 
                          if (i,j) not in [app['pos'] for app in self.appliances.values()]]
         self.agent_pos = empty_positions[self.np_random.choice(len(empty_positions))]
         
-        # Reset energy tracking
         self.current_energy = 0
         self.visited = set()
         
@@ -54,37 +51,37 @@ class EnergyEnv(gym.Env):
         return self._get_obs(), {}
     
     def step(self, action):
-        # Move agent
+        
         x, y = self.agent_pos
-        if action == 0: x = max(0, x-1)        # up
-        elif action == 1: y = min(self.grid_size-1, y+1)  # right
-        elif action == 2: x = min(self.grid_size-1, x+1)  # down
-        elif action == 3: y = max(0, y-1)      # left
+        if action == 0: x = max(0, x-1)     
+        elif action == 1: y = min(self.grid_size-1, y+1)  
+        elif action == 2: x = min(self.grid_size-1, x+1)
+        elif action == 3: y = max(0, y-1)  
         
         self.agent_pos = (x, y)
         
-        # Calculate reward and energy impact
-        reward = -0.1  # small penalty for each move
+        
+        reward = -0.1 
         terminated = False
         truncated = False
         current_appliance = None
         
-        # Check if on appliance
+        
         for app, data in self.appliances.items():
             if self.agent_pos == data['pos']:
                 current_appliance = app
                 self.current_energy += data['energy']
                 
                 if app == 'Goal':
-                    # Scale final reward based on energy usage
+                    
                     energy_score = max(0, 10 - abs(self.current_energy))
                     reward = 5 + energy_score
                     terminated = True
                 elif app not in self.visited:
-                    reward = max(0, 2 + data['energy'])  # Higher reward for efficient choices
+                    reward = max(0, 2 + data['energy']) 
                     self.visited.add(app)
         
-        # Cap energy between -10 and +10 for visualization
+       
         self.current_energy = max(-10, min(10, self.current_energy))
         
         if self.render_mode == "human":
@@ -97,12 +94,12 @@ class EnergyEnv(gym.Env):
             return self._render_frame()
     
     def _get_obs(self):
-        # Create observation matrix
+        
         obs = np.zeros((self.grid_size, self.grid_size), dtype=np.float32)
         x, y = self.agent_pos
-        obs[x,y] = 1.0  # agent position
+        obs[x,y] = 1.0
         
-        # Mark appliances
+        
         for data in self.appliances.values():
             pos = data['pos']
             obs[pos] = 0.5
@@ -112,16 +109,16 @@ class EnergyEnv(gym.Env):
     def _render_frame(self, current_appliance=None):
         if self.window is None and self.render_mode == "human":
             pygame.init()
-            self.window = pygame.display.set_mode((600, 600))  # Larger window for legend
+            self.window = pygame.display.set_mode((600, 600))
             pygame.display.set_caption("Energy Usage Optimization")
         if self.clock is None and self.render_mode == "human":
             self.clock = pygame.time.Clock()
 
         canvas = pygame.Surface((600, 600))
-        canvas.fill((255, 255, 255))  # White background
+        canvas.fill((255, 255, 255))
         pix_square_size = 400 // self.grid_size
         
-        # Draw appliances with energy-based colors
+        
         for app, data in self.appliances.items():
             x, y = data['pos']
             energy = data['energy']

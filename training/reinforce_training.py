@@ -40,7 +40,7 @@ def train_reinforce():
     optimizer = optim.Adam(policy.parameters(), lr=1e-3)
     
     # Training parameters
-    max_episodes = 1000
+    max_episodes = 100
     gamma = 0.99
     
     # Create save directory

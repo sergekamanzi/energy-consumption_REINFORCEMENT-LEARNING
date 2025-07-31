@@ -12,7 +12,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import Categorical
 
-# REINFORCE Policy Network
 class PolicyNetwork(nn.Module):
     def __init__(self, input_shape, num_actions, hidden_size=64):
         super(PolicyNetwork, self).__init__()
@@ -38,7 +37,7 @@ class PolicyNetwork(nn.Module):
             action = m.sample()
             return action.item(), m.log_prob(action)
 
-# Training Functions
+
 def train_dqn():
     env = make_vec_env(lambda: EnergyEnv(), n_envs=1)
     os.makedirs("models/dqn", exist_ok=True)
@@ -132,7 +131,7 @@ def train_reinforce():
             log_probs.append(log_prob)
             rewards.append(float(reward[0]))
         
-        # Calculate returns
+       
         returns = []
         R = 0
         for r in reversed(rewards):
@@ -143,7 +142,7 @@ def train_reinforce():
         if len(returns) > 1:
             returns = (returns - returns.mean()) / (returns.std() + 1e-8)
         
-        # Update policy
+       
         policy_loss = torch.stack([-log_prob * R for log_prob, R in zip(log_probs, returns)]).sum()
         
         optimizer.zero_grad()
@@ -157,7 +156,7 @@ def train_reinforce():
     torch.save(policy.state_dict(), "models/reinforce/reinforce_energy_final.pt")
     env.close()
 
-# Testing Functions
+
 def test_random_agent():
     env = EnergyEnv(render_mode="human")
     frames = []
@@ -211,7 +210,7 @@ def test_trained_agent(model_path, algorithm):
     
     clock = pygame.time.Clock()
     
-    for episode in range(3):  # Now testing 10 episodes
+    for episode in range(3):
         obs, _ = env.reset()
         done = False
         total_reward = 0
@@ -237,7 +236,7 @@ def test_trained_agent(model_path, algorithm):
         episode_rewards.append(total_reward)
         print(f"Episode {episode+1}: Reward = {total_reward:.1f}")
     
-    # Print summary statistics
+   
     print("\n=== Testing Summary ===")
     print(f"Average Reward: {np.mean(episode_rewards):.2f}")
     print(f"Standard Deviation: {np.std(episode_rewards):.2f}")
@@ -256,7 +255,7 @@ if __name__ == "__main__":
                        help="Test a trained model")
     args = parser.parse_args()
     
-    # Training
+ 
     if args.train in ["dqn", "all"]:
         print("\n=== Training DQN ===")
         train_dqn()
@@ -273,7 +272,7 @@ if __name__ == "__main__":
         print("\n=== Training REINFORCE ===")
         train_reinforce()
     
-    # Testing
+ 
     if args.test == "random":
         print("\n=== Testing Random Agent ===")
         test_random_agent()
